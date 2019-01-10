@@ -1,2 +1,6 @@
+This repository is in Russian (except for code and this paragraph). Sorry =)
+
+
 # boring-robot
-Наработки по роботу для Скушного Места
+
+Наработки по роботу для Скушного Места.
