@@ -6,6 +6,8 @@
 
 [легенды]: https://learn.adafruit.com/adafruit-motor-shield?view=all
 
+Родная либа: https://github.com/adafruit/Adafruit-Motor-Shield-library
+
 
 ![Схема](mshieldv12schem.png)
 
