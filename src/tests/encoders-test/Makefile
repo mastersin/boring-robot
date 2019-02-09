@@ -1,6 +1,6 @@
 
 TOPDIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-SKETCH_FILE ?= interrupt.cpp
+SKETCH_FILE ?= sketch.cpp
 SKETCH := $(abspath $(SKETCH_FILE))
 BOARD ?= arduino:avr:mega
 PORT ?= /dev/ttyACM1
