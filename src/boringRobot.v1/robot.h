@@ -1,18 +1,21 @@
 #ifndef _ROBOT_H
 #define _ROBOT_H
 
-#define BUTTON_PIN     34
-#define MOTORA_DIR_PIN 13
-#define MOTORB_DIR_PIN 12
-#define MOTORA_PWM_PIN 3
-#define MOTORB_PWM_PIN 11
-#define ENCODERA_PIN   18
-#define ENCODERB_PIN   19
-
 void log(const char*);
 void log(const char*, int);
 
+extern "C" {
+typedef void (*callback)(void);
+}
+
 class Drivers;
+
+enum ScreenState
+{
+  RobotStatusInfo,
+  EncodersInfo,
+  LastInfo
+};
 
 class Robot
 {
@@ -21,8 +24,17 @@ public:
   void init(const char* name);
   void poll();
 
+  void setButtonCallbacks(callback cbp, callback cbc = 0, callback cbd = 0);
+  void setStatus(const char*);
+
 private:
   Drivers &drv;
+  const char *name;
+  bool needUpdateStatus;
+  char status[17];
+  ScreenState screenState;
+
+  void showStatus();
 };
 
 #endif

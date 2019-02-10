@@ -70,8 +70,8 @@ void loop() {
     unsigned long diff1 = last_counter1 - diff_counter1;
     unsigned long diff2 = last_counter2 - diff_counter2;
 
-    velocity1 = counter_to_length(velocity_counter1 + velocity_counter1) / 2;
-    velocity2 = counter_to_length(velocity_counter2 + velocity_counter2) / 2;
+    velocity1 = counter_to_length(velocity_counter1 + diff1) / 2;
+    velocity2 = counter_to_length(velocity_counter2 + diff2) / 2;
 
     velocity_counter1 = diff1;
     velocity_counter2 = diff2;

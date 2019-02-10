@@ -10,3 +10,6 @@
 [submodule "src/libraries/ClickEncoder"]
 	path = src/libraries/ClickEncoder
 	url = https://github.com/mastersin/encoder
+[submodule "src/libraries/OneButton"]
+	path = src/libraries/OneButton
+	url = https://github.com/mastersin/OneButton
