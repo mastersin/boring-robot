@@ -99,18 +99,42 @@ void interruptHandlerEncoderB()
   ++static_drv.encoderB;
 }
 
+static char showBuffer[17];
+
+void prepareString(char *data, const char *newData)
+{
+  strncpy (data, newData, 16);
+  uint8_t newLen = strlen(newData);
+  if (newLen < 16)
+  {
+    for (uint8_t i = newLen; i < 16; i++)
+      data[i] = ' ';
+  }
+  data[16] = 0;
+}
+
 Robot::Robot():
-  drv(static_drv), name(name), needUpdateStatus(false), screenState(RobotStatusInfo) {}
+  drv(static_drv), name(name), needUpdateScreen(false), needUpdateStatus(false), screenState(RobotStatusInfo) {}
 
 void Robot::init(const char* name)
 {
   drv.lcd.begin();
   drv.lcd.backlight();
-  drv.lcd.print(name);
+  prepareString(showBuffer, name);
+  drv.lcd.print(showBuffer);
 }
 
 void Robot::showStatus()
 {
+  if (needUpdateScreen)
+  {
+    drv.lcd.setCursor(0,0);
+    prepareString(showBuffer, name);
+    drv.lcd.print(showBuffer);
+    needUpdateScreen = false;
+    needUpdateStatus = true;
+  }
+
   if (needUpdateStatus)
   {
     drv.lcd.setCursor(0,1);
@@ -122,6 +146,8 @@ void Robot::showStatus()
 void Robot::poll()
 {
   drv.button.tick();
+  drv.encoderA.poll();
+  drv.encoderB.poll();
 
   switch(screenState) {
     default:
@@ -129,6 +155,7 @@ void Robot::poll()
       showStatus();
       break;
     case EncodersInfo:
+      showEncoders();
       break;
   }
 }
@@ -143,20 +170,42 @@ void Robot::setButtonCallbacks(callback cbp, callback cbc, callback cbd)
     drv.button.attachDoubleClick(cbd);
 }
 
-void prepareString(char *data, const char *newData)
-{
-  strncpy (data, newData, 16);
-  uint8_t newLen = strlen(newData);
-  if (newLen < 16)
-  {
-    for (uint8_t i = newLen; i < 16; i++)
-      data[i] = ' ';
-  }
-  data[16] = 0;
-}
-
 void Robot::setStatus(const char *newStatus)
 {
   prepareString(status, newStatus);
   needUpdateStatus = true;
+}
+
+void Robot::showEncoders()
+{
+  if (needUpdateScreen)
+  {
+    drv.lcd.setCursor(0,0);
+    prepareString(showBuffer, "EncA = ");
+    drv.lcd.print(showBuffer);
+    drv.lcd.setCursor(7,0);
+    drv.lcd.print(drv.encoderA());
+
+    drv.lcd.setCursor(0,1);
+    prepareString(showBuffer, "EncB = ");
+    drv.lcd.print(showBuffer);
+    drv.lcd.setCursor(7,1);
+    drv.lcd.print(drv.encoderB());
+
+    needUpdateScreen = false;
+  }
+}
+
+void Robot::showNextInfo()
+{
+  screenState = screenState + 1;
+  if (screenState >= LastInfo)
+    screenState = RobotStatusInfo;
+  needUpdateScreen = true;
+}
+
+void Robot::showPoll()
+{
+  if(screenState == EncodersInfo)
+    needUpdateScreen = true;
 }

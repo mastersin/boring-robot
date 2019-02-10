@@ -61,15 +61,21 @@ void startStopProgram()
   log(taskManager.checkAvailableSlots(slotString));
 }
 
+void nextInfo()
+{
+  robot.showNextInfo();
+}
+
 void oneSecondPulse() {
   log("One second pulse");
+  robot.showPoll();
 }
 
 void oneSecondsStartUp() {
   log("Initial boringRobot");
 
   robot.init("boringRobot-v1.0");
-  robot.setButtonCallbacks(startStopProgram, startProgram);
+  robot.setButtonCallbacks(startStopProgram, startProgram, nextInfo);
   robot.setStatus("Ready");
 
   taskManager.scheduleFixedRate(10, [] {
