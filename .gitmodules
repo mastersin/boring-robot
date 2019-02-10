@@ -7,3 +7,6 @@
 [submodule "src/libraries/LiquidCrystal-I2C"]
 	path = src/libraries/LiquidCrystal-I2C
 	url = https://github.com/mastersin/Arduino-LiquidCrystal-I2C-library
+[submodule "src/libraries/ClickEncoder"]
+	path = src/libraries/ClickEncoder
+	url = https://github.com/mastersin/encoder
