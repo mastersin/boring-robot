@@ -1,0 +1,9 @@
+[submodule "src/libraries/IoAbstraction"]
+	path = src/libraries/IoAbstraction
+	url = https://github.com/mastersin/IoAbstraction
+[submodule "src/libraries/AnalogScanner"]
+	path = src/libraries/AnalogScanner
+	url = https://github.com/mastersin/AnalogScanner
+[submodule "src/libraries/LiquidCrystal-I2C"]
+	path = src/libraries/LiquidCrystal-I2C
+	url = https://github.com/mastersin/Arduino-LiquidCrystal-I2C-library
