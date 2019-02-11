@@ -16,3 +16,6 @@
 [submodule "src/libraries/TimerOne"]
 	path = src/libraries/TimerOne
 	url = https://github.com/mastersin/TimerOne
+[submodule "src/libraries/TimerTwo"]
+	path = src/libraries/TimerTwo
+	url = https://github.com/mastersin/TimerTwo

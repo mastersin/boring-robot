@@ -6,7 +6,7 @@
 #include <IoAbstraction.h>
 #include <AnalogScanner.h>
 #include <ClickEncoder.h>
-#include <TimerOne.h>
+#include <TimerTwo.h>
 
 #define BUTTON_PIN     34
 #define MOTORA_DIR_PIN 13
@@ -190,7 +190,7 @@ public:
     motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN),
     motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
     color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
-    rotaryButton(A9,A10,A9)
+    rotaryButton(A9,A10,A8)
   {
     pinMode(ENCODERA_PIN, INPUT_PULLUP);
     pinMode(ENCODERB_PIN, INPUT_PULLUP);
@@ -250,8 +250,8 @@ void Robot::init(const char* newName)
   drv.scanner.setScanOrder(ANALOG_SCAN_COUNT, analogScanOrder);
   drv.scanner.beginScanning();
 
-  Timer1.initialize(1000);
-  Timer1.attachInterrupt(interruptHandlerRotaryButton);
+  Timer2.initialize(1000);
+  Timer2.attachInterrupt(interruptHandlerRotaryButton);
 
   drv.lcd.begin();
   drv.lcd.backlight();
