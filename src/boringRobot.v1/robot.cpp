@@ -4,6 +4,7 @@
 #include <LiquidCrystal_I2C.h>
 #include <OneButton.h>
 #include <IoAbstraction.h>
+#include <AnalogScanner.h>
 
 #define BUTTON_PIN     34
 #define MOTORA_DIR_PIN 13
@@ -128,6 +129,9 @@ void Encoder::poll()
 void interruptHandlerEncoderA();
 void interruptHandlerEncoderB();
 
+int analogScanOrder[] = {A0, A1, A2, A3, A4, A5};
+const int ANALOG_SCAN_COUNT = sizeof(analogScanOrder) / sizeof(analogScanOrder[0]);
+
 class Drivers
 {
 public:
@@ -148,6 +152,7 @@ public:
   Encoder encoderB;
   Motor motorA;
   Motor motorB;
+  AnalogScanner scanner;
 };
 
 static Drivers static_drv;
@@ -182,6 +187,10 @@ Robot::Robot():
 void Robot::init(const char* newName)
 {
   name = newName;
+
+  drv.scanner.setScanOrder(ANALOG_SCAN_COUNT, analogScanOrder);
+  drv.scanner.beginScanning();
+
   drv.lcd.begin();
   drv.lcd.backlight();
   prepareString(showBuffer, name);
@@ -223,6 +232,12 @@ void Robot::poll()
       break;
     case MotorsInfo:
       showMotors();
+      break;
+    case AnalogInfo1:
+      showAnalog1();
+      break;
+    case AnalogInfo2:
+      showAnalog2();
       break;
   }
 }
@@ -286,6 +301,55 @@ void Robot::showMotors()
     needUpdateScreen = false;
   }
 }
+
+void Robot::showAnalog1()
+{
+  if (needUpdateScreen)
+  {
+    drv.lcd.setCursor(0,0);
+    prepareString(showBuffer, "");
+    drv.lcd.print(showBuffer);
+    drv.lcd.setCursor(0,1);
+    drv.lcd.print(showBuffer);
+
+    drv.lcd.setCursor(2,0);
+    drv.lcd.print(analogSensor(ForwardSensorLeft));
+    drv.lcd.setCursor(10,0);
+    drv.lcd.print(analogSensor(ForwardSensorRight));
+
+    drv.lcd.setCursor(1,1);
+    drv.lcd.print(analogSensor(CentralSensorLeft));
+    drv.lcd.setCursor(11,1);
+    drv.lcd.print(analogSensor(CentralSensorRight));
+
+    needUpdateScreen = false;
+  }
+}
+
+void Robot::showAnalog2()
+{
+  if (needUpdateScreen)
+  {
+    drv.lcd.setCursor(0,0);
+    prepareString(showBuffer, "");
+    drv.lcd.print(showBuffer);
+    drv.lcd.setCursor(0,1);
+    drv.lcd.print(showBuffer);
+
+    drv.lcd.setCursor(1,0);
+    drv.lcd.print(analogSensor(CentralSensorLeft));
+    drv.lcd.setCursor(11,0);
+    drv.lcd.print(analogSensor(CentralSensorRight));
+
+    drv.lcd.setCursor(0,1);
+    drv.lcd.print(analogSensor(BackwardSensorLeft));
+    drv.lcd.setCursor(12,1);
+    drv.lcd.print(analogSensor(BackwardSensorRight));
+
+    needUpdateScreen = false;
+  }
+}
+
 void Robot::showNextInfo()
 {
   screenState = screenState + 1;
@@ -296,7 +360,7 @@ void Robot::showNextInfo()
 
 void Robot::showPoll()
 {
-  if(screenState == EncodersInfo || screenState == MotorsInfo)
+  if(screenState == EncodersInfo || screenState == MotorsInfo || screenState == AnalogInfo1 || screenState == AnalogInfo2)
     needUpdateScreen = true;
 }
 
@@ -332,4 +396,9 @@ void Robot::setSteeringPower(int steering, int power)
 
   drv.motorA = powerA;
   drv.motorB = powerB;
+}
+
+int Robot::analogSensor(AnalogSensors sensor)
+{
+  return drv.scanner.getValue(analogScanOrder[sensor]);
 }

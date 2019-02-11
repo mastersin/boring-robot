@@ -10,11 +10,23 @@ typedef void (*callback)(void);
 
 class Drivers;
 
+enum AnalogSensors
+{
+  ForwardSensorRight,
+  ForwardSensorLeft,
+  CentralSensorRight,
+  CentralSensorLeft,
+  BackwardSensorRight,
+  BackwardSensorLeft
+};
+
 enum ScreenState
 {
   RobotStatusInfo,
   EncodersInfo,
   MotorsInfo,
+  AnalogInfo1,
+  AnalogInfo2,
   LastInfo
 };
 
@@ -34,6 +46,8 @@ public:
   void setPowerB(int);
   void setSteeringPower(int, int);
 
+  int analogSensor(AnalogSensors);
+
 private:
   Drivers &drv;
   const char *name;
@@ -45,6 +59,8 @@ private:
   void showStatus();
   void showEncoders();
   void showMotors();
+  void showAnalog1();
+  void showAnalog2();
 };
 
 #endif
