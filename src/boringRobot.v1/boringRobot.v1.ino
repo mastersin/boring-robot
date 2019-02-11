@@ -29,6 +29,9 @@ void program()
 {
     if (!programStarted)
       return;
+
+    robot.setPowerA(100);
+    robot.setPowerB(100);
 }
 
 void startProgram()
@@ -78,7 +81,7 @@ void oneSecondsStartUp() {
   robot.setButtonCallbacks(startStopProgram, startProgram, nextInfo);
   robot.setStatus("Ready");
 
-  taskManager.scheduleFixedRate(10, [] {
+  taskManager.scheduleFixedRate(100, [] {
     robot.poll();
   });
 }

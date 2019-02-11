@@ -14,6 +14,7 @@ enum ScreenState
 {
   RobotStatusInfo,
   EncodersInfo,
+  MotorsInfo,
   LastInfo
 };
 
@@ -29,6 +30,10 @@ public:
   void setStatus(const char*);
   void showNextInfo();
 
+  void setPowerA(int);
+  void setPowerB(int);
+  void setSteeringPower(int, int);
+
 private:
   Drivers &drv;
   const char *name;
@@ -39,6 +44,7 @@ private:
 
   void showStatus();
   void showEncoders();
+  void showMotors();
 };
 
 #endif
