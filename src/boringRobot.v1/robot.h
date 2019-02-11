@@ -54,10 +54,12 @@ public:
   void setButtonCallbacks(callback cbp, callback cbc = 0, callback cbd = 0);
   void setStatus(const char*);
   void showNextInfo();
+  void showPrevInfo();
 
   void setPowerA(int);
   void setPowerB(int);
   void setSteeringPower(int, int);
+  void resetEncoders();
 
   int colorSensorRed();
   int colorSensorGreen();
@@ -66,6 +68,7 @@ public:
   const char *colorSensorName();
 
   int rotaryButton();
+  int rotaryValue();
 
   int analogSensor(AnalogSensors);
 

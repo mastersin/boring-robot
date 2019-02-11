@@ -72,7 +72,6 @@ void nextInfo()
 void oneSecondPulse() {
   log("One second pulse");
   robot.showPoll();
-  log("Rotary button = ", robot.rotaryButton());
 }
 
 void oneSecondsStartUp() {

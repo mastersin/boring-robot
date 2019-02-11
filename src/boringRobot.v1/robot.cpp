@@ -116,6 +116,7 @@ public:
   {
     return diff_counter;
   }
+  void reset() { prev_counter = counter = 0; }
 
 private:
   volatile unsigned long counter;
@@ -190,7 +191,7 @@ public:
     motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN),
     motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
     color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
-    rotaryButton(A9,A10,A8)
+    rotary(A9,A10,A8)
   {
     pinMode(ENCODERA_PIN, INPUT_PULLUP);
     pinMode(ENCODERB_PIN, INPUT_PULLUP);
@@ -206,7 +207,7 @@ public:
   Motor motorB;
   AnalogScanner scanner;
   Color color;
-  ClickEncoder rotaryButton;
+  ClickEncoder rotary;
 };
 
 static Drivers static_drv;
@@ -223,7 +224,7 @@ void interruptHandlerEncoderB()
 
 void interruptHandlerRotaryButton()
 {
-  static_drv.rotaryButton.service();
+  static_drv.rotary.service();
 }
 
 static char showBuffer[17];
@@ -284,6 +285,18 @@ void Robot::poll()
   drv.encoderA.poll();
   drv.encoderB.poll();
   //drv.color.poll();
+
+  int rotary = rotaryValue();
+  int button = rotaryButton();
+  if (rotary > 0 || button == ClickEncoder::Clicked)
+    showNextInfo();
+  if (rotary < 0)
+    showPrevInfo();
+  if (button == ClickEncoder::Held)
+  {
+    if (screenState == EncodersInfo)
+      resetEncoders();
+  }
 
   switch(screenState) {
     default:
@@ -449,6 +462,15 @@ void Robot::showNextInfo()
   needUpdateScreen = true;
 }
 
+void Robot::showPrevInfo()
+{
+  if (screenState <= RobotStatusInfo)
+    screenState = LastInfo - 1;
+  else
+    screenState = screenState - 1;
+  needUpdateScreen = true;
+}
+
 void Robot::showPoll()
 {
   if(screenState == EncodersInfo || screenState == MotorsInfo || screenState == AnalogInfo1 || screenState == AnalogInfo2)
@@ -531,7 +553,37 @@ const char *Robot::colorSensorName()
   return colorNames[colorSensor()];
 }
 
+int Robot::rotaryValue()
+{
+  static int value = 0;
+  static unsigned long last_millis = 0;
+  unsigned long now = millis();
+  if (drv.rotary.getValue(true) != 0 && now - last_millis >= 200) {
+    last_millis = now;
+    value += drv.rotary.getValue();
+    if (value >= 2) {
+      value = 0;
+      return 1;
+    }
+    if (value <= -2) {
+      value = 0;
+      return -1;
+    }
+  }
+  return 0;
+}
+
 int Robot::rotaryButton()
 {
-  return drv.rotaryButton.getValue();
+  static unsigned long last_millis = 0;
+  unsigned long now = millis();
+  if (now - last_millis >= 200)
+    return drv.rotary.getButton();
+  return 0;
+}
+
+void Robot::resetEncoders()
+{
+  drv.encoderA.reset();
+  drv.encoderB.reset();
 }
