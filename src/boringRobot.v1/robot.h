@@ -27,7 +27,20 @@ enum ScreenState
   MotorsInfo,
   AnalogInfo1,
   AnalogInfo2,
+  ColorInfo,
   LastInfo
+};
+
+enum ColorType
+{
+  NoColor,
+  BlackColor,
+  BlueColor,
+  GreenColor,
+  YellowColor,
+  RedColor,
+  WhiteColor,
+  BrownColor
 };
 
 class Robot
@@ -46,6 +59,12 @@ public:
   void setPowerB(int);
   void setSteeringPower(int, int);
 
+  int colorSensorRed();
+  int colorSensorGreen();
+  int colorSensorBlue();
+  ColorType colorSensor();
+  const char *colorSensorName();
+
   int analogSensor(AnalogSensors);
 
 private:
@@ -61,6 +80,7 @@ private:
   void showMotors();
   void showAnalog1();
   void showAnalog2();
+  void showColor();
 };
 
 #endif

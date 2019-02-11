@@ -13,6 +13,12 @@
 #define MOTORB_PWM_PIN 11
 #define ENCODERA_PIN   18
 #define ENCODERB_PIN   19
+#define COLOR_LED_PIN  28
+#define COLOR_S0_PIN   29
+#define COLOR_S1_PIN   30
+#define COLOR_S2_PIN   31
+#define COLOR_S3_PIN   32
+#define COLOR_OUT_PIN  33
 
 void log(const char* logLine) {
   Serial.print(millis());
@@ -126,6 +132,47 @@ void Encoder::poll()
   diff_counter = diff;
 }
 
+class Color
+{
+public:
+  Color(uint8_t _led, uint8_t _s0, uint8_t _s1, uint8_t _s2, uint8_t _s3, uint8_t _out):
+    led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0)
+  {
+    pinMode(s0, OUTPUT);
+    pinMode(s1, OUTPUT);
+    pinMode(s2, OUTPUT);
+    pinMode(s3, OUTPUT);
+    pinMode(led, OUTPUT);
+    pinMode(out, INPUT);
+
+    digitalWrite(s0, HIGH);
+    digitalWrite(s1, HIGH);
+    digitalWrite(led, LOW);
+  }
+
+  ColorType operator()() { return 0; }
+  void poll();
+
+  int red;
+  int green;
+  int blue;
+
+private:
+  uint8_t led, s0, s1, s2, s3, out;
+
+};
+
+void Color::poll()
+{
+  digitalWrite(s2, LOW);
+  digitalWrite(s3, LOW);
+  red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s3, HIGH);
+  blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  digitalWrite(s2, HIGH);
+  green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+}
+
 void interruptHandlerEncoderA();
 void interruptHandlerEncoderB();
 
@@ -138,7 +185,8 @@ public:
   Drivers():
     lcd(0x27, 16, 2), button(BUTTON_PIN, true),
     motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN),
-    motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN)
+    motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
+    color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN)
   {
     pinMode(ENCODERA_PIN, INPUT_PULLUP);
     pinMode(ENCODERB_PIN, INPUT_PULLUP);
@@ -153,6 +201,7 @@ public:
   Motor motorA;
   Motor motorB;
   AnalogScanner scanner;
+  Color color;
 };
 
 static Drivers static_drv;
@@ -221,6 +270,7 @@ void Robot::poll()
   drv.button.tick();
   drv.encoderA.poll();
   drv.encoderB.poll();
+  //drv.color.poll();
 
   switch(screenState) {
     default:
@@ -238,6 +288,9 @@ void Robot::poll()
       break;
     case AnalogInfo2:
       showAnalog2();
+      break;
+    case ColorInfo:
+      showColor();
       break;
   }
 }
@@ -350,6 +403,31 @@ void Robot::showAnalog2()
   }
 }
 
+void Robot::showColor()
+{
+  if (needUpdateScreen)
+  {
+    drv.lcd.setCursor(0,0);
+    prepareString(showBuffer, "R:      G:      ");
+    drv.lcd.print(showBuffer);
+    drv.lcd.setCursor(0,1);
+    prepareString(showBuffer, "B:              ");
+    drv.lcd.print(showBuffer);
+
+    drv.lcd.setCursor(3,0);
+    drv.lcd.print(colorSensorRed());
+    drv.lcd.setCursor(11,0);
+    drv.lcd.print(colorSensorGreen());
+
+    drv.lcd.setCursor(3,1);
+    drv.lcd.print(colorSensorBlue());
+    drv.lcd.setCursor(8,1);
+    drv.lcd.print(colorSensorName());
+
+    needUpdateScreen = false;
+  }
+}
+
 void Robot::showNextInfo()
 {
   screenState = screenState + 1;
@@ -401,4 +479,41 @@ void Robot::setSteeringPower(int steering, int power)
 int Robot::analogSensor(AnalogSensors sensor)
 {
   return drv.scanner.getValue(analogScanOrder[sensor]);
+}
+
+int Robot::colorSensorRed()
+{
+  return drv.color.red;
+}
+
+int Robot::colorSensorGreen()
+{
+  return drv.color.green;
+}
+
+int Robot::colorSensorBlue()
+{
+  return drv.color.blue;
+}
+
+ColorType Robot::colorSensor()
+{
+  return drv.color();
+}
+
+const char *colorNames[]
+{
+  "unknown",
+  "black",
+  "blue",
+  "green",
+  "yellow",
+  "red",
+  "white",
+  "brown"
+};
+
+const char *Robot::colorSensorName()
+{
+  return colorNames[colorSensor()];
 }
