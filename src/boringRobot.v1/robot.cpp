@@ -5,6 +5,8 @@
 #include <OneButton.h>
 #include <IoAbstraction.h>
 #include <AnalogScanner.h>
+#include <ClickEncoder.h>
+#include <TimerOne.h>
 
 #define BUTTON_PIN     34
 #define MOTORA_DIR_PIN 13
@@ -175,6 +177,7 @@ void Color::poll()
 
 void interruptHandlerEncoderA();
 void interruptHandlerEncoderB();
+void interruptHandlerRotaryButton();
 
 int analogScanOrder[] = {A0, A1, A2, A3, A4, A5};
 const int ANALOG_SCAN_COUNT = sizeof(analogScanOrder) / sizeof(analogScanOrder[0]);
@@ -186,7 +189,8 @@ public:
     lcd(0x27, 16, 2), button(BUTTON_PIN, true),
     motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN),
     motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
-    color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN)
+    color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
+    rotaryButton(A9,A10,A9)
   {
     pinMode(ENCODERA_PIN, INPUT_PULLUP);
     pinMode(ENCODERB_PIN, INPUT_PULLUP);
@@ -202,6 +206,7 @@ public:
   Motor motorB;
   AnalogScanner scanner;
   Color color;
+  ClickEncoder rotaryButton;
 };
 
 static Drivers static_drv;
@@ -214,6 +219,11 @@ void interruptHandlerEncoderA()
 void interruptHandlerEncoderB()
 {
   ++static_drv.encoderB;
+}
+
+void interruptHandlerRotaryButton()
+{
+  static_drv.rotaryButton.service();
 }
 
 static char showBuffer[17];
@@ -239,6 +249,9 @@ void Robot::init(const char* newName)
 
   drv.scanner.setScanOrder(ANALOG_SCAN_COUNT, analogScanOrder);
   drv.scanner.beginScanning();
+
+  Timer1.initialize(1000);
+  Timer1.attachInterrupt(interruptHandlerRotaryButton);
 
   drv.lcd.begin();
   drv.lcd.backlight();
@@ -516,4 +529,9 @@ const char *colorNames[]
 const char *Robot::colorSensorName()
 {
   return colorNames[colorSensor()];
+}
+
+int Robot::rotaryButton()
+{
+  return drv.rotaryButton.getValue();
 }

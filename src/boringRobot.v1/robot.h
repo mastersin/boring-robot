@@ -65,6 +65,8 @@ public:
   ColorType colorSensor();
   const char *colorSensorName();
 
+  int rotaryButton();
+
   int analogSensor(AnalogSensors);
 
 private:

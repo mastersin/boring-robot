@@ -13,3 +13,6 @@
 [submodule "src/libraries/OneButton"]
 	path = src/libraries/OneButton
 	url = https://github.com/mastersin/OneButton
+[submodule "src/libraries/TimerOne"]
+	path = src/libraries/TimerOne
+	url = https://github.com/mastersin/TimerOne

@@ -2,6 +2,18 @@
 # Color sensor
 
 https://www.hackster.io/MakerRobotics/color-sensor-gy-31-6b5f75
+https://hacktronics.co.in/color-recognition/tcs230-tcs3200-color-recognition-sensor-gy-31-module
+
+http://alex.lyceum-2.ru/index.php/2015/11/22/datchik-cveta-tcs3200/
+
+https://oscarliang.com/arduino-timer-and-interrupt-tutorial/
+
+http://wikihandbk.com/wiki/Arduino:Примеры/Гайд_по_использованию_датчика_цвета_TCS230/TCS3200_с_Arduino
+
+https://blog.kvv213.com/2018/01/datchik-sveta-i-tsveta-tcs3200-arduino-mega-chto-to-poluchaetsya/
+
+
+
 
 Требует чёртову прорву пинов, зато работает.
 
