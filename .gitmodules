@@ -19,3 +19,6 @@
 [submodule "src/libraries/TimerTwo"]
 	path = src/libraries/TimerTwo
 	url = https://github.com/mastersin/TimerTwo
+[submodule "src/libraries/TimerAPI"]
+	path = src/libraries/TimerAPI
+	url = https://github.com/mastersin/arduino-timer-api

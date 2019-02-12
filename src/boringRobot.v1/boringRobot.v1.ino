@@ -8,6 +8,7 @@ char slotString[20] = { 0 };
 int pulseTask = -1;
 int pollTask = -1;
 int programTask = -1;
+int colorSensorTask = -1;
 
 Robot robot;
 static const char *name = "boringRobot-v1.0";
@@ -81,8 +82,11 @@ void oneSecondsStartUp() {
   robot.setButtonCallbacks(startStopProgram, startProgram, nextInfo);
   robot.setStatus("Ready");
 
-  taskManager.scheduleFixedRate(100, [] {
+  pollTask = taskManager.scheduleFixedRate(100, [] {
     robot.poll();
+  });
+  colorSensorTask = taskManager.scheduleFixedRate(robot.colorInterval(), [] {
+    robot.colorPoll();
   });
 }
 

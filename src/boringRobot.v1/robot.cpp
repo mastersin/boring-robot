@@ -3,10 +3,10 @@
 #include <Arduino.h>
 #include <LiquidCrystal_I2C.h>
 #include <OneButton.h>
-#include <IoAbstraction.h>
 #include <AnalogScanner.h>
 #include <ClickEncoder.h>
 #include <TimerTwo.h>
+#include <IoAbstraction.h>
 
 #define BUTTON_PIN     34
 #define MOTORA_DIR_PIN 13
@@ -20,7 +20,7 @@
 #define COLOR_S1_PIN   30
 #define COLOR_S2_PIN   31
 #define COLOR_S3_PIN   32
-#define COLOR_OUT_PIN  33
+#define COLOR_OUT_PIN  2
 
 void log(const char* logLine) {
   Serial.print(millis());
@@ -135,11 +135,21 @@ void Encoder::poll()
   diff_counter = diff;
 }
 
+void interruptHandlerColorCounter();
+#define TCS3200_PULSES_INTERVAL 1000
 class Color
 {
 public:
+  enum ColorState
+  {
+    RedColor   = 0x0,
+    BlueColor  = 0x1,
+    WhiteColor = 0x2,
+    GreenColor = 0x3
+  };
+
   Color(uint8_t _led, uint8_t _s0, uint8_t _s1, uint8_t _s2, uint8_t _s3, uint8_t _out):
-    led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0)
+    led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0), state(StartPollState)
   {
     pinMode(s0, OUTPUT);
     pinMode(s1, OUTPUT);
@@ -148,32 +158,99 @@ public:
     pinMode(led, OUTPUT);
     pinMode(out, INPUT);
 
+    //digitalWrite(s0, HIGH);
+    //digitalWrite(s1, HIGH);
+    digitalWrite(led, LOW);
+    attachInterrupt(COLOR_OUT_PIN, interruptHandlerColorCounter, FALLING);
+  }
+
+  void startPulse(ColorState c)
+  {
+    digitalWrite(s2, c & 0x1 ? HIGH : LOW);
+    digitalWrite(s3, c & 0x2 ? HIGH : LOW);
     digitalWrite(s0, HIGH);
     digitalWrite(s1, HIGH);
-    digitalWrite(led, LOW);
+    counter = 0;
   }
 
   ColorType operator()() { return 0; }
+  void operator++() { ++counter; }
   void poll();
 
-  int red;
-  int green;
-  int blue;
+  unsigned int red;
+  unsigned int green;
+  unsigned int blue;
+  unsigned int white;
 
 private:
+  enum PollState
+  {
+    StartPollState,
+    RedPollState,
+    RedPollWaitState,
+    BluePollState,
+    BluePollWaitState,
+    GreenPollState,
+    GreenPollWaitState,
+    WhitePollState,
+    WhitePollWaitState,
+  };
+
+  unsigned long getPulse()
+  {
+    //digitalWrite(s0, LOW);
+    //digitalWrite(s1, LOW);
+    log("waitPulse = ", counter);
+    if (counter == 0)
+      return 0;
+    return TCS3200_PULSES_INTERVAL / counter;
+  }
+
   uint8_t led, s0, s1, s2, s3, out;
 
+  volatile unsigned long counter;
+  PollState state;
 };
 
 void Color::poll()
 {
-  digitalWrite(s2, LOW);
-  digitalWrite(s3, LOW);
-  red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
-  digitalWrite(s3, HIGH);
-  blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
-  digitalWrite(s2, HIGH);
-  green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+  switch(state) {
+    case WhitePollWaitState:
+      white = getPulse();
+      state = RedPollState;
+      break;
+    default:
+    case StartPollState:
+    case RedPollState:
+      startPulse(RedColor);
+      state = RedPollWaitState;
+      break;
+    case RedPollWaitState:
+      red = getPulse();
+      state = BluePollState;
+      break;
+    case BluePollState:
+      startPulse(BlueColor);
+      state = BluePollWaitState;
+      break;
+    case BluePollWaitState:
+      blue = getPulse();
+      state = RedPollState;
+      break;
+    case GreenPollState:
+      startPulse(GreenColor);
+      state = GreenPollWaitState;
+      break;
+    case GreenPollWaitState:
+      green = getPulse();
+      state = WhitePollState;
+      break;
+    case WhitePollState:
+      startPulse(WhiteColor);
+      state = WhitePollWaitState;
+      break;
+  }
+  log("color poll state = ", state);
 }
 
 void interruptHandlerEncoderA();
@@ -225,6 +302,17 @@ void interruptHandlerEncoderB()
 void interruptHandlerRotaryButton()
 {
   static_drv.rotary.service();
+}
+
+void interruptHandlerColorCounter()
+{
+  //log("pulse");
+  ++static_drv.color;
+}
+
+void Robot::colorPoll()
+{
+  drv.color.poll();
 }
 
 static char showBuffer[17];
@@ -586,4 +674,9 @@ void Robot::resetEncoders()
 {
   drv.encoderA.reset();
   drv.encoderB.reset();
+}
+
+int Robot::colorInterval()
+{
+  return TCS3200_PULSES_INTERVAL;
 }

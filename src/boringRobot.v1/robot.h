@@ -50,6 +50,8 @@ public:
   void init(const char* name);
   void poll();
   void showPoll();
+  void colorPoll();
+  int colorInterval();
 
   void setButtonCallbacks(callback cbp, callback cbc = 0, callback cbd = 0);
   void setStatus(const char*);
