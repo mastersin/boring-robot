@@ -1,10 +1,16 @@
+#define COLOR_LED_PIN  28
+#define COLOR_S0_PIN   29
+#define COLOR_S1_PIN   30
+#define COLOR_S2_PIN   31
+#define COLOR_S3_PIN   32
+#define COLOR_OUT_PIN  2
 
-const int s0 = 9;
-const int s1 = 8;
-const int s2 = 12;
-const int s3 = 11;
-const int out = 13;
-const int led = 10;
+const int s0 = COLOR_S0_PIN;
+const int s1 = COLOR_S1_PIN;
+const int s2 = COLOR_S2_PIN;
+const int s3 = COLOR_S3_PIN;
+const int out = COLOR_OUT_PIN;
+const int led = COLOR_LED_PIN;
 
 // values
 int red = 0;
