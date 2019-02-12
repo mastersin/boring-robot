@@ -17,6 +17,8 @@ int red = 0;
 int green = 0;
 int blue = 0;
 
+void interruptHandlerColorCounter();
+#define TCS3200_PULSES_INTERVAL 100
 void setup() {
     Serial.begin(9600);
 
@@ -25,11 +27,12 @@ void setup() {
     pinMode(s2, OUTPUT);
     pinMode(s3, OUTPUT);
     pinMode(led, OUTPUT);
-    pinMode(out, INPUT);
+    pinMode(out, INPUT_PULLUP);
 
     digitalWrite(s0, HIGH);
     digitalWrite(s1, HIGH);
     digitalWrite(led, LOW);
+    attachInterrupt(digitalPinToInterrupt(COLOR_OUT_PIN), interruptHandlerColorCounter, CHANGE);
 }
 
 void loop() {
@@ -65,12 +68,30 @@ void loop() {
     delay(1000);
 }
 
+volatile unsigned long counter;
+
+
 void color() {
     digitalWrite(s2, LOW);
     digitalWrite(s3, LOW);
-    red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+    //red = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+    counter = 0;
+    delay(TCS3200_PULSES_INTERVAL);
+    red = counter;
     digitalWrite(s3, HIGH);
-    blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+    counter = 0;
+    delay(TCS3200_PULSES_INTERVAL);
+    blue = counter;
+    //blue = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
     digitalWrite(s2, HIGH);
-    green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+    counter = 0;
+    delay(TCS3200_PULSES_INTERVAL);
+    green = counter;
+    //green = pulseIn(out, digitalRead(out) == HIGH ? LOW : HIGH);
+}
+
+void interruptHandlerColorCounter()
+{
+  //Serial.println(counter);
+  ++counter;
 }
