@@ -136,7 +136,7 @@ void Encoder::poll()
 }
 
 void interruptHandlerColorCounter();
-#define TCS3200_PULSES_INTERVAL 1000
+#define TCS3200_PULSES_INTERVAL 200
 class Color
 {
 public:
@@ -156,18 +156,18 @@ public:
     pinMode(s2, OUTPUT);
     pinMode(s3, OUTPUT);
     pinMode(led, OUTPUT);
-    pinMode(out, INPUT);
+    pinMode(out, INPUT_PULLUP);
 
-    //digitalWrite(s0, HIGH);
-    //digitalWrite(s1, HIGH);
+    digitalWrite(s0, LOW);
+    digitalWrite(s1, LOW);
     digitalWrite(led, LOW);
-    attachInterrupt(COLOR_OUT_PIN, interruptHandlerColorCounter, FALLING);
+    attachInterrupt(digitalPinToInterrupt(out), interruptHandlerColorCounter, FALLING);
   }
 
   void startPulse(ColorState c)
   {
-    digitalWrite(s2, c & 0x1 ? HIGH : LOW);
-    digitalWrite(s3, c & 0x2 ? HIGH : LOW);
+    digitalWrite(s2, c & 0x2 ? HIGH : LOW);
+    digitalWrite(s3, c & 0x1 ? HIGH : LOW);
     digitalWrite(s0, HIGH);
     digitalWrite(s1, HIGH);
     counter = 0;
@@ -198,12 +198,11 @@ private:
 
   unsigned long getPulse()
   {
-    //digitalWrite(s0, LOW);
-    //digitalWrite(s1, LOW);
-    log("waitPulse = ", counter);
+    digitalWrite(s0, LOW);
+    digitalWrite(s1, LOW);
     if (counter == 0)
       return 0;
-    return TCS3200_PULSES_INTERVAL / counter;
+    return counter; //TCS3200_PULSES_INTERVAL / counter;
   }
 
   uint8_t led, s0, s1, s2, s3, out;
@@ -217,8 +216,6 @@ void Color::poll()
   switch(state) {
     case WhitePollWaitState:
       white = getPulse();
-      state = RedPollState;
-      break;
     default:
     case StartPollState:
     case RedPollState:
@@ -227,24 +224,18 @@ void Color::poll()
       break;
     case RedPollWaitState:
       red = getPulse();
-      state = BluePollState;
-      break;
     case BluePollState:
       startPulse(BlueColor);
       state = BluePollWaitState;
       break;
     case BluePollWaitState:
       blue = getPulse();
-      state = RedPollState;
-      break;
     case GreenPollState:
       startPulse(GreenColor);
       state = GreenPollWaitState;
       break;
     case GreenPollWaitState:
       green = getPulse();
-      state = WhitePollState;
-      break;
     case WhitePollState:
       startPulse(WhiteColor);
       state = WhitePollWaitState;
@@ -306,7 +297,6 @@ void interruptHandlerRotaryButton()
 
 void interruptHandlerColorCounter()
 {
-  //log("pulse");
   ++static_drv.color;
 }
 
@@ -561,7 +551,7 @@ void Robot::showPrevInfo()
 
 void Robot::showPoll()
 {
-  if(screenState == EncodersInfo || screenState == MotorsInfo || screenState == AnalogInfo1 || screenState == AnalogInfo2)
+  if(screenState != RobotStatusInfo)
     needUpdateScreen = true;
 }
 
