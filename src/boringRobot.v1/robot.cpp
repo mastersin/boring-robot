@@ -76,11 +76,9 @@ void Motor::set(int newPower)
     newPower = MIN_POWER;
 
   if (newPower >= 0) {
-    if(power < 0)
-      digitalWrite(dir, HIGH);
+    digitalWrite(dir, LOW);
   } else {
-    if (power >= 0)
-      digitalWrite(dir, LOW);
+    digitalWrite(dir, HIGH);
     setPower = -newPower;
   }
 
@@ -99,6 +97,13 @@ public:
       return;
     last_millis = curr_millis;
     ++counter;
+  }
+  void operator--() {
+    unsigned long curr_millis = millis();
+    if (curr_millis - last_millis < 10)
+      return;
+    last_millis = curr_millis;
+    --counter;
   }
   const unsigned long& operator()() const { return prev_counter; }
   const unsigned long& operator*() const { return diff_counter; }
@@ -241,7 +246,6 @@ void Color::poll()
       state = WhitePollWaitState;
       break;
   }
-  log("color poll state = ", state);
 }
 
 void interruptHandlerEncoderA();
@@ -282,12 +286,20 @@ static Drivers static_drv;
 
 void interruptHandlerEncoderA()
 {
-  ++static_drv.encoderA;
+  log("motorA ", static_drv.motorA());
+  if (static_drv.motorA() < 0)
+    --static_drv.encoderA;
+  else
+    ++static_drv.encoderA;
 }
 
 void interruptHandlerEncoderB()
 {
-  ++static_drv.encoderB;
+  log("motorB ", static_drv.motorB());
+  if (static_drv.motorB() < 0)
+    --static_drv.encoderB;
+  else
+    ++static_drv.encoderB;
 }
 
 void interruptHandlerRotaryButton()

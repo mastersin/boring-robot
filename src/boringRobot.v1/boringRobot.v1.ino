@@ -31,8 +31,8 @@ void program()
     if (!programStarted)
       return;
 
-    robot.setPowerA(100);
-    robot.setPowerB(100);
+    robot.setPowerA(30);
+    robot.setPowerB(-30);
 }
 
 void startProgram()
