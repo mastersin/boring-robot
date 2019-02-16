@@ -45,10 +45,12 @@ static const int16_t MIN_STEERING = -MAX_STEERING;
 static const int16_t MAX_POWER = 100;
 static const int16_t MIN_POWER = -MAX_POWER;
 
+static const int16_t START_PWM = 50;
+
 class Motor
 {
 public:
-  Motor(uint8_t _dir, uint8_t _pwm): dir(_dir), pwm(_pwm), power(0)
+  Motor(uint8_t _dir, uint8_t _pwm, int _adjust = 0): dir(_dir), pwm(_pwm), power(0), adjust(_adjust)
   {
     pinMode(dir, OUTPUT);
     pinMode(pwm, OUTPUT);
@@ -64,6 +66,7 @@ private:
   uint8_t pwm;
 
   int power;
+  int adjust;
 };
 
 void Motor::set(int newPower)
@@ -83,14 +86,14 @@ void Motor::set(int newPower)
   }
 
   power = newPower;
-  setPower = setPower * 255 / MAX_POWER;
+  setPower = START_PWM + setPower * (255 - START_PWM) / MAX_POWER + adjust;
   analogWrite(pwm, setPower);
 }
 
 class Encoder
 {
 public:
-  Encoder(): counter(0), prev_counter(0), diff_counter(0) {}
+  Encoder(): counter(0), prev_counter(0), diff_counter(0), diff_prev(0) {}
   void operator++() {
     unsigned long curr_millis = millis();
     if (curr_millis - last_millis < 10)
@@ -105,39 +108,50 @@ public:
     last_millis = curr_millis;
     --counter;
   }
-  const unsigned long& operator()() const { return prev_counter; }
-  const unsigned long& operator*() const { return diff_counter; }
+  const long& operator()() const { return prev_counter; }
+  const unsigned int& operator*() const { return diff_counter; }
   void poll();
 
-  unsigned long length()
+  long length()
   {
     return (counter * STEP_PER_COUNT) / 1000;
   }
-  unsigned long velocity()
+  unsigned int velocity()
   {
     return (diff_counter * STEP_PER_COUNT) / 1000;
   }
-  unsigned long diff()
+  unsigned int diff()
   {
     return diff_counter;
   }
   void reset() { prev_counter = counter = 0; }
 
 private:
-  volatile unsigned long counter;
-  unsigned long prev_counter;
-  unsigned long diff_counter;
+  volatile long counter;
+  long prev_counter;
+  unsigned int diff_counter;
+  unsigned int diff_prev;
   unsigned long last_millis;
 };
 
 void Encoder::poll()
 {
-  unsigned long curr_counter = counter;
-  unsigned long diff = curr_counter - prev_counter;
+  long curr_counter = counter;
+  int diff = curr_counter - prev_counter;
+  if (diff < 0)
+    diff = -diff;
   if (curr_counter != prev_counter) {
     prev_counter = curr_counter;
   }
+  diff_prev = diff_counter;
   diff_counter = diff;
+
+//  Serial.print(diff_prev);
+//  Serial.print(" + ");
+//  Serial.print(diff_counter);
+//  Serial.print(" < ");
+//  Serial.print(diff_prev + diff_counter);
+//  Serial.println(" >");
 }
 
 void interruptHandlerColorCounter();
@@ -260,13 +274,15 @@ class Drivers
 public:
   Drivers():
     lcd(0x27, 16, 2), button(BUTTON_PIN, true),
-    motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN),
+    motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN, -10),
     motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
     color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
     rotary(A9,A10,A8)
   {
     pinMode(ENCODERA_PIN, INPUT_PULLUP);
     pinMode(ENCODERB_PIN, INPUT_PULLUP);
+    //TCCR1B |= _BV(CS12) | _BV(CS10);
+    //TCCR3B |= _BV(CS32) | _BV(CS30);
     attachInterrupt(digitalPinToInterrupt(ENCODERA_PIN), interruptHandlerEncoderA, RISING);
     attachInterrupt(digitalPinToInterrupt(ENCODERB_PIN), interruptHandlerEncoderB, RISING);
   }
@@ -286,7 +302,6 @@ static Drivers static_drv;
 
 void interruptHandlerEncoderA()
 {
-  log("motorA ", static_drv.motorA());
   if (static_drv.motorA() < 0)
     --static_drv.encoderA;
   else
@@ -295,7 +310,6 @@ void interruptHandlerEncoderA()
 
 void interruptHandlerEncoderB()
 {
-  log("motorB ", static_drv.motorB());
   if (static_drv.motorB() < 0)
     --static_drv.encoderB;
   else
@@ -567,13 +581,47 @@ void Robot::showPoll()
     needUpdateScreen = true;
 }
 
+static const int ADJUST_PREV_DIFF_POWER = 20;
+static const int ADJUST_DIFF_POWER = 10;
 void Robot::setPowerA(int power)
 {
+  static unsigned int prev_diff = 0;
+  unsigned int diff = drv.encoderA.diff();
+  int prev_adjust = ADJUST_PREV_DIFF_POWER;
+  if (power < 0)
+    prev_adjust = -prev_adjust;
+  int adjust = ADJUST_DIFF_POWER;
+  if (power < 0)
+    adjust = -adjust;
+  if (diff < 1 && power != 0)
+  {
+    if (prev_diff < 1)
+      power += prev_adjust;
+    if (diff < 1)
+      power += adjust;
+  }
+  prev_diff = diff;
   drv.motorA = power;
 }
 
 void Robot::setPowerB(int power)
 {
+  static unsigned int prev_diff = 0;
+  unsigned int diff = drv.encoderB.diff();
+  int prev_adjust = ADJUST_PREV_DIFF_POWER;
+  if (power < 0)
+    prev_adjust = -prev_adjust;
+  int adjust = ADJUST_DIFF_POWER;
+  if (power < 0)
+    adjust = -adjust;
+  if (diff < 1 && power != 0)
+  {
+    if (prev_diff < 1)
+      power += prev_adjust;
+    if (diff < 1)
+      power += adjust;
+  }
+  prev_diff = diff;
   drv.motorB = power;
 }
 

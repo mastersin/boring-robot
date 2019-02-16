@@ -25,14 +25,41 @@ void setup() {
   taskManager.scheduleFixedRate(5, [] { log(taskManager.checkAvailableSlots(slotString)); }, TIME_SECONDS);
 }
 
+
+static int BASE_POWER = 15;
 static bool programStarted = false;
 void program()
 {
-    if (!programStarted)
-      return;
+  if (!programStarted) {
+    robot.setPowerA(0);
+    robot.setPowerB(0);
+    return;
+  }
 
-    robot.setPowerA(30);
-    robot.setPowerB(-30);
+  int fr = robot.analogSensor(ForwardSensorRight);
+  int fl = robot.analogSensor(ForwardSensorLeft);
+  int br = robot.analogSensor(BackwardSensorRight);
+  int bl = robot.analogSensor(BackwardSensorLeft);
+  int r = robot.analogSensor(CentralSensorRight);
+  int l = robot.analogSensor(CentralSensorLeft);
+
+  int er = l - r;
+  int k1 = 1;
+  int k2 = 20;
+  int fs = fl + fr;
+  if (fs < 1000)
+    k2 = 30;
+
+  int lp = BASE_POWER + er*k1/k2;
+  int rp = BASE_POWER - er*k1/k2;
+
+  if (lp < 0) lp = 0;
+  if (rp < 0) rp = 0;
+  if (lp > 60) lp = 60;
+  if (rp > 60) rp = 60;
+
+  robot.setPowerA(lp);
+  robot.setPowerB(rp);
 }
 
 void startProgram()
@@ -72,6 +99,40 @@ void nextInfo()
 
 void oneSecondPulse() {
   log("One second pulse");
+
+  int fr = robot.analogSensor(ForwardSensorRight);
+  int fl = robot.analogSensor(ForwardSensorLeft);
+  int br = robot.analogSensor(BackwardSensorRight);
+  int bl = robot.analogSensor(BackwardSensorLeft);
+  int r = robot.analogSensor(CentralSensorRight);
+  int l = robot.analogSensor(CentralSensorLeft);
+  Serial.print(bl);
+  Serial.print(" -> ");
+  Serial.print(l);
+  Serial.print(" - ");
+  Serial.print(fl);
+  Serial.print(" : ");
+  Serial.print(fr);
+  Serial.print(" - ");
+  Serial.print(r);
+  Serial.print(" <- ");
+  Serial.print(br);
+  Serial.print(" : ");
+  Serial.print(bl - br);
+  Serial.print(" + ");
+  Serial.println(l - r);
+
+  int er = l - r;
+  int k1 = 1;
+  int k2 = 20;
+  int fs = fl + fr;
+  if (fs < 1000)
+    k2 = 30;
+
+  Serial.print(BASE_POWER + er*k1/k2);
+  Serial.print(" | ");
+  Serial.println(BASE_POWER - er*k1/k2);
+
   robot.showPoll();
 }
 
