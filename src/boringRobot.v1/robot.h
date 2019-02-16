@@ -66,6 +66,7 @@ class Robot
     int colorSensorRed();
     int colorSensorGreen();
     int colorSensorBlue();
+    int colorSensorWhite();
     ColorType colorSensor();
     const char *colorSensorName();
 

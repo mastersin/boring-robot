@@ -178,7 +178,7 @@ class Color
     };
 
     Color(uint8_t _led, uint8_t _s0, uint8_t _s1, uint8_t _s2, uint8_t _s3, uint8_t _out):
-      led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0), state(StartPollState)
+      led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0), state(StartPollState), showDebug(false)
     {
       pinMode(s0, OUTPUT);
       pinMode(s1, OUTPUT);
@@ -203,7 +203,7 @@ class Color
     }
 
     ColorType operator()() {
-      return 0;
+      return getColor();
     }
     void operator++() {
       ++counter;
@@ -216,6 +216,7 @@ class Color
     unsigned int white;
 
   private:
+
     enum PollState
     {
       StartPollState,
@@ -238,11 +239,113 @@ class Color
       return counter; //TCS3200_PULSES_INTERVAL / counter;
     }
 
+    ColorType getColor();
+
     uint8_t led, s0, s1, s2, s3, out;
 
     volatile unsigned long counter;
     PollState state;
+
+  public:
+    bool showDebug;
 };
+
+ColorType Color::getColor()
+{
+  int _red = red, _blue = blue, _green = green, _white = white;
+  int max_value = _red, min_value = _blue;
+
+  if (_green > max_value)
+    max_value = _green;
+  if (_blue > max_value)
+    max_value = _blue;
+  if (_red < min_value)
+    min_value = _red;
+  if (_green < min_value)
+    min_value = _green;
+
+  if (_white > 1300) {
+    if (_white > 1900) {
+      if (min_value > 600)
+        return ::WhiteColor;
+    } else if (min_value > 380)
+      return ::WhiteColor;
+  }
+
+  if (_white < 700 && max_value < 300)
+    return ::BlackColor;
+//  if (_white < 800 && max_value < 350)
+//    return ::BlackColor;
+//  if (_white < 900 && max_value < 400)
+//    return ::BlackColor;
+  log ("max_value - min_value = ", max_value - min_value);
+
+  if (max_value - min_value > 100 && _white <= 1300)
+  {
+    ColorType may_color;
+    int other_diff;
+    if (max_value == _blue) {
+      may_color = ::BlueColor;
+      int _red_green = _red - _green;
+      if (_red < _green)
+        _red_green = -_red_green;
+      other_diff = _red_green;
+    } else if (max_value == _green) {
+      may_color = ::GreenColor;
+      int _red_blue = _red - _blue;
+      if (_red < _blue)
+        _red_blue = -_red_blue;
+      other_diff = _red_blue;
+    } else if (max_value == _red) {
+      may_color = ::RedColor;
+      int _blue_green = _blue - _green;
+      if (_blue < _green)
+        _blue_green = -_blue_green;
+      other_diff = _blue_green;
+    }
+    log ("red = ", red);
+    log ("blue = ", blue);
+    log ("green = ", green);
+    log ("may color = ", may_color);
+    log ("other diff = ", other_diff);
+    if (other_diff < 50) {
+        //if (may_color != ::RedColor || _blue < 350)
+        return may_color;
+    }
+    if (may_color == ::RedColor && _red > 400) {
+      if ((_green + 20) > _blue)
+        return ::YellowColor;
+      if (_red > 500)
+        return ::RedColor;
+    } else if (may_color == ::BlueColor && _red > 400) {
+      if ((_green + 20) > _blue)
+        return YellowColor;
+    } else if (may_color == ::BlueColor) {
+      if ((_blue - 20) > min_value + other_diff)
+        return ::BlueColor;
+    }
+    if (_white > 500 && _red < 400) {
+      if (may_color == ::GreenColor)
+        return ::GreenColor;
+      if (may_color == ::RedColor) {
+        if ((_green + 20) > _blue)
+          return ::YellowColor;
+      }
+    }
+  } else if (max_value - min_value > 100 && _white >= 1300) {
+    if (_red == max_value && _blue == min_value && _blue < 350 && _green - _blue > 50)
+      return ::YellowColor;
+  } else {
+    if (_white > 600 && _red < 400) {
+      if (_green > (_blue + 10))
+        return ::GreenColor;
+      if (_blue > (_green + 10))
+        return ::BlueColor;
+    }
+  }
+
+  return ::NoColor;
+}
 
 void Color::poll()
 {
@@ -414,6 +517,9 @@ void Robot::poll()
   {
     if (screenState == EncodersInfo)
       resetEncoders();
+  } else if (button == ClickEncoder::DoubleClicked) {
+    if (screenState == ColorInfo)
+      drv.color.showDebug = !drv.color.showDebug;
   }
 
   switch (screenState) {
@@ -555,7 +661,7 @@ void Robot::showColor()
     prepareString(showBuffer, "R:      G:      ");
     drv.lcd.print(showBuffer);
     drv.lcd.setCursor(0, 1);
-    prepareString(showBuffer, "B:              ");
+    prepareString(showBuffer, "B:      W:      ");
     drv.lcd.print(showBuffer);
 
     drv.lcd.setCursor(3, 0);
@@ -565,8 +671,13 @@ void Robot::showColor()
 
     drv.lcd.setCursor(3, 1);
     drv.lcd.print(colorSensorBlue());
-    drv.lcd.setCursor(8, 1);
-    drv.lcd.print(colorSensorName());
+    if (!drv.color.showDebug) {
+      drv.lcd.setCursor(8, 1);
+      drv.lcd.print(colorSensorName());
+    } else {
+      drv.lcd.setCursor(11, 1);
+      drv.lcd.print(colorSensorWhite());
+    }
 
     needUpdateScreen = false;
   }
@@ -681,6 +792,11 @@ int Robot::colorSensorGreen()
 int Robot::colorSensorBlue()
 {
   return drv.color.blue;
+}
+
+int Robot::colorSensorWhite()
+{
+  return drv.color.white;
 }
 
 ColorType Robot::colorSensor()
