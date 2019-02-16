@@ -45,7 +45,7 @@ static const int16_t MIN_STEERING = -MAX_STEERING;
 static const int16_t MAX_POWER = 100;
 static const int16_t MIN_POWER = -MAX_POWER;
 
-static const int16_t START_PWM = 50;
+static const int16_t START_PWM = 30;
 
 class Motor
 {

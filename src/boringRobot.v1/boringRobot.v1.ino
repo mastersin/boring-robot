@@ -43,20 +43,44 @@ void program()
   int r = robot.analogSensor(CentralSensorRight);
   int l = robot.analogSensor(CentralSensorLeft);
 
+  static int I = 0;
   int er = l - r;
   int k1 = 1;
   int k2 = 20;
   int fs = fl + fr;
+  int acc = 0;
   if (fs < 1000)
     k2 = 30;
+  if (fs > 800 && br < 500 && bl < 500)
+    acc = 10;
 
-  int lp = BASE_POWER + er * k1 / k2;
-  int rp = BASE_POWER - er * k1 / k2;
+  I += er;
+  if (I > 10000)
+    I = 10000;
+  if (I > -10000)
+    I = -10000;
+
+//  if ((br > 400 || bl > 400) && fs > 1000) {
+//    k2 = 15;
+//  }
+  int adj = er * k1 / k2;
+
+  int lp = BASE_POWER + acc + (adj > 0 ? adj * 2 / 3 : adj);// + I / 1000;
+  int rp = BASE_POWER + acc - (adj < 0 ? adj * 2 / 3 : adj);// - I / 1000;
 
   if (lp < 0) lp = 0;
   if (rp < 0) rp = 0;
-  if (lp > 60) lp = 60;
-  if (rp > 60) rp = 60;
+  if (lp > 60) lp = 65;
+  if (rp > 60) rp = 65;
+
+//  if (br > 500) {
+//    lp -= 20;
+//    rp += 20;
+//  }
+//  if (bl > 500) {
+//    rp -= 20;
+//    lp += 20;
+//  }
 
   robot.setPowerA(lp);
   robot.setPowerB(rp);
@@ -65,7 +89,7 @@ void program()
 void startProgram()
 {
   if (programTask < 0) {
-    programTask = taskManager.scheduleFixedRate(1, program);
+    programTask = taskManager.scheduleFixedRate(10, program);
     log("Start boringRobot, programTask = ", programTask);
     programStarted = true;
     robot.setStatus("Started");
@@ -99,39 +123,6 @@ void nextInfo()
 
 void oneSecondPulse() {
   log("One second pulse");
-
-  int fr = robot.analogSensor(ForwardSensorRight);
-  int fl = robot.analogSensor(ForwardSensorLeft);
-  int br = robot.analogSensor(BackwardSensorRight);
-  int bl = robot.analogSensor(BackwardSensorLeft);
-  int r = robot.analogSensor(CentralSensorRight);
-  int l = robot.analogSensor(CentralSensorLeft);
-  Serial.print(bl);
-  Serial.print(" -> ");
-  Serial.print(l);
-  Serial.print(" - ");
-  Serial.print(fl);
-  Serial.print(" : ");
-  Serial.print(fr);
-  Serial.print(" - ");
-  Serial.print(r);
-  Serial.print(" <- ");
-  Serial.print(br);
-  Serial.print(" : ");
-  Serial.print(bl - br);
-  Serial.print(" + ");
-  Serial.println(l - r);
-
-  int er = l - r;
-  int k1 = 1;
-  int k2 = 20;
-  int fs = fl + fr;
-  if (fs < 1000)
-    k2 = 30;
-
-  Serial.print(BASE_POWER + er * k1 / k2);
-  Serial.print(" | ");
-  Serial.println(BASE_POWER - er * k1 / k2);
 
   robot.showPoll();
 }
