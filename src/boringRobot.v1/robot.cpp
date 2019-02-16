@@ -264,7 +264,7 @@ ColorType Color::getColor()
   if (_green < min_value)
     min_value = _green;
 
-  if (_white > 1300) {
+  if (_white > 1250) {
     if (_white > 1900) {
       if (min_value > 600)
         return ::WhiteColor;
@@ -274,13 +274,10 @@ ColorType Color::getColor()
 
   if (_white < 700 && max_value < 300)
     return ::BlackColor;
-//  if (_white < 800 && max_value < 350)
-//    return ::BlackColor;
-//  if (_white < 900 && max_value < 400)
-//    return ::BlackColor;
-  log ("max_value - min_value = ", max_value - min_value);
+  if (_white < 900 && max_value < 400 && _green < 250)
+    return ::BlackColor;
 
-  if (max_value - min_value > 100 && _white <= 1300)
+  if (max_value - min_value > 100 && _white <= 1250)
   {
     ColorType may_color;
     int other_diff;
@@ -303,11 +300,6 @@ ColorType Color::getColor()
         _blue_green = -_blue_green;
       other_diff = _blue_green;
     }
-    log ("red = ", red);
-    log ("blue = ", blue);
-    log ("green = ", green);
-    log ("may color = ", may_color);
-    log ("other diff = ", other_diff);
     if (may_color == ::RedColor && _red > 400) {
       if ((_green + 20) > _blue)
         return ::YellowColor;
@@ -321,6 +313,7 @@ ColorType Color::getColor()
         return ::BlueColor;
     }
     if (other_diff < 50) {
+      if (may_color != ::RedColor || _red - _blue > 150)
         return may_color;
     }
     if (_white > 500 && _red < 400) {
