@@ -49,24 +49,28 @@ static const int16_t START_PWM = 50;
 
 class Motor
 {
-public:
-  Motor(uint8_t _dir, uint8_t _pwm, int _adjust = 0): dir(_dir), pwm(_pwm), power(0), adjust(_adjust)
-  {
-    pinMode(dir, OUTPUT);
-    pinMode(pwm, OUTPUT);
-    digitalWrite(dir, LOW);
-    analogWrite(pwm, 0);
-  }
-  void operator= (int newPower) { set(newPower); }
-  const int& operator()() const { return power; }
-  void set(int newPower);
+  public:
+    Motor(uint8_t _dir, uint8_t _pwm, int _adjust = 0): dir(_dir), pwm(_pwm), power(0), adjust(_adjust)
+    {
+      pinMode(dir, OUTPUT);
+      pinMode(pwm, OUTPUT);
+      digitalWrite(dir, LOW);
+      analogWrite(pwm, 0);
+    }
+    void operator= (int newPower) {
+      set(newPower);
+    }
+    const int& operator()() const {
+      return power;
+    }
+    void set(int newPower);
 
-private:
-  uint8_t dir;
-  uint8_t pwm;
+  private:
+    uint8_t dir;
+    uint8_t pwm;
 
-  int power;
-  int adjust;
+    int power;
+    int adjust;
 };
 
 void Motor::set(int newPower)
@@ -92,46 +96,52 @@ void Motor::set(int newPower)
 
 class Encoder
 {
-public:
-  Encoder(): counter(0), prev_counter(0), diff_counter(0), diff_prev(0) {}
-  void operator++() {
-    unsigned long curr_millis = millis();
-    if (curr_millis - last_millis < 10)
-      return;
-    last_millis = curr_millis;
-    ++counter;
-  }
-  void operator--() {
-    unsigned long curr_millis = millis();
-    if (curr_millis - last_millis < 10)
-      return;
-    last_millis = curr_millis;
-    --counter;
-  }
-  const long& operator()() const { return prev_counter; }
-  const unsigned int& operator*() const { return diff_counter; }
-  void poll();
+  public:
+    Encoder(): counter(0), prev_counter(0), diff_counter(0), diff_prev(0) {}
+    void operator++() {
+      unsigned long curr_millis = millis();
+      if (curr_millis - last_millis < 10)
+        return;
+      last_millis = curr_millis;
+      ++counter;
+    }
+    void operator--() {
+      unsigned long curr_millis = millis();
+      if (curr_millis - last_millis < 10)
+        return;
+      last_millis = curr_millis;
+      --counter;
+    }
+    const long& operator()() const {
+      return prev_counter;
+    }
+    const unsigned int& operator*() const {
+      return diff_counter;
+    }
+    void poll();
 
-  long length()
-  {
-    return (counter * STEP_PER_COUNT) / 1000;
-  }
-  unsigned int velocity()
-  {
-    return (diff_counter * STEP_PER_COUNT) / 1000;
-  }
-  unsigned int diff()
-  {
-    return diff_counter;
-  }
-  void reset() { prev_counter = counter = 0; }
+    long length()
+    {
+      return (counter * STEP_PER_COUNT) / 1000;
+    }
+    unsigned int velocity()
+    {
+      return (diff_counter * STEP_PER_COUNT) / 1000;
+    }
+    unsigned int diff()
+    {
+      return diff_counter;
+    }
+    void reset() {
+      prev_counter = counter = 0;
+    }
 
-private:
-  volatile long counter;
-  long prev_counter;
-  unsigned int diff_counter;
-  unsigned int diff_prev;
-  unsigned long last_millis;
+  private:
+    volatile long counter;
+    long prev_counter;
+    unsigned int diff_counter;
+    unsigned int diff_prev;
+    unsigned long last_millis;
 };
 
 void Encoder::poll()
@@ -146,93 +156,97 @@ void Encoder::poll()
   diff_prev = diff_counter;
   diff_counter = diff;
 
-//  Serial.print(diff_prev);
-//  Serial.print(" + ");
-//  Serial.print(diff_counter);
-//  Serial.print(" < ");
-//  Serial.print(diff_prev + diff_counter);
-//  Serial.println(" >");
+  //  Serial.print(diff_prev);
+  //  Serial.print(" + ");
+  //  Serial.print(diff_counter);
+  //  Serial.print(" < ");
+  //  Serial.print(diff_prev + diff_counter);
+  //  Serial.println(" >");
 }
 
 void interruptHandlerColorCounter();
 #define TCS3200_PULSES_INTERVAL 200
 class Color
 {
-public:
-  enum ColorState
-  {
-    RedColor   = 0x0,
-    BlueColor  = 0x1,
-    WhiteColor = 0x2,
-    GreenColor = 0x3
-  };
+  public:
+    enum ColorState
+    {
+      RedColor   = 0x0,
+      BlueColor  = 0x1,
+      WhiteColor = 0x2,
+      GreenColor = 0x3
+    };
 
-  Color(uint8_t _led, uint8_t _s0, uint8_t _s1, uint8_t _s2, uint8_t _s3, uint8_t _out):
-    led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0), state(StartPollState)
-  {
-    pinMode(s0, OUTPUT);
-    pinMode(s1, OUTPUT);
-    pinMode(s2, OUTPUT);
-    pinMode(s3, OUTPUT);
-    pinMode(led, OUTPUT);
-    pinMode(out, INPUT_PULLUP);
+    Color(uint8_t _led, uint8_t _s0, uint8_t _s1, uint8_t _s2, uint8_t _s3, uint8_t _out):
+      led(_led), s0(_s0), s1(_s1), s2(_s2), s3(_s3), out(_out), red(0), blue(0), green(0), state(StartPollState)
+    {
+      pinMode(s0, OUTPUT);
+      pinMode(s1, OUTPUT);
+      pinMode(s2, OUTPUT);
+      pinMode(s3, OUTPUT);
+      pinMode(led, OUTPUT);
+      pinMode(out, INPUT_PULLUP);
 
-    digitalWrite(s0, LOW);
-    digitalWrite(s1, LOW);
-    digitalWrite(led, LOW);
-    attachInterrupt(digitalPinToInterrupt(out), interruptHandlerColorCounter, FALLING);
-  }
+      digitalWrite(s0, LOW);
+      digitalWrite(s1, LOW);
+      digitalWrite(led, LOW);
+      attachInterrupt(digitalPinToInterrupt(out), interruptHandlerColorCounter, FALLING);
+    }
 
-  void startPulse(ColorState c)
-  {
-    digitalWrite(s2, c & 0x2 ? HIGH : LOW);
-    digitalWrite(s3, c & 0x1 ? HIGH : LOW);
-    digitalWrite(s0, HIGH);
-    digitalWrite(s1, HIGH);
-    counter = 0;
-  }
+    void startPulse(ColorState c)
+    {
+      digitalWrite(s2, c & 0x2 ? HIGH : LOW);
+      digitalWrite(s3, c & 0x1 ? HIGH : LOW);
+      digitalWrite(s0, HIGH);
+      digitalWrite(s1, HIGH);
+      counter = 0;
+    }
 
-  ColorType operator()() { return 0; }
-  void operator++() { ++counter; }
-  void poll();
-
-  unsigned int red;
-  unsigned int green;
-  unsigned int blue;
-  unsigned int white;
-
-private:
-  enum PollState
-  {
-    StartPollState,
-    RedPollState,
-    RedPollWaitState,
-    BluePollState,
-    BluePollWaitState,
-    GreenPollState,
-    GreenPollWaitState,
-    WhitePollState,
-    WhitePollWaitState,
-  };
-
-  unsigned long getPulse()
-  {
-    digitalWrite(s0, LOW);
-    digitalWrite(s1, LOW);
-    if (counter == 0)
+    ColorType operator()() {
       return 0;
-    return counter; //TCS3200_PULSES_INTERVAL / counter;
-  }
+    }
+    void operator++() {
+      ++counter;
+    }
+    void poll();
 
-  uint8_t led, s0, s1, s2, s3, out;
+    unsigned int red;
+    unsigned int green;
+    unsigned int blue;
+    unsigned int white;
 
-  volatile unsigned long counter;
-  PollState state;
+  private:
+    enum PollState
+    {
+      StartPollState,
+      RedPollState,
+      RedPollWaitState,
+      BluePollState,
+      BluePollWaitState,
+      GreenPollState,
+      GreenPollWaitState,
+      WhitePollState,
+      WhitePollWaitState,
+    };
+
+    unsigned long getPulse()
+    {
+      digitalWrite(s0, LOW);
+      digitalWrite(s1, LOW);
+      if (counter == 0)
+        return 0;
+      return counter; //TCS3200_PULSES_INTERVAL / counter;
+    }
+
+    uint8_t led, s0, s1, s2, s3, out;
+
+    volatile unsigned long counter;
+    PollState state;
 };
 
 void Color::poll()
 {
-  switch(state) {
+  switch (state) {
     case WhitePollWaitState:
       white = getPulse();
     default:
@@ -271,31 +285,31 @@ const int ANALOG_SCAN_COUNT = sizeof(analogScanOrder) / sizeof(analogScanOrder[0
 
 class Drivers
 {
-public:
-  Drivers():
-    lcd(0x27, 16, 2), button(BUTTON_PIN, true),
-    motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN, -10),
-    motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
-    color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
-    rotary(A9,A10,A8)
-  {
-    pinMode(ENCODERA_PIN, INPUT_PULLUP);
-    pinMode(ENCODERB_PIN, INPUT_PULLUP);
-    //TCCR1B |= _BV(CS12) | _BV(CS10);
-    //TCCR3B |= _BV(CS32) | _BV(CS30);
-    attachInterrupt(digitalPinToInterrupt(ENCODERA_PIN), interruptHandlerEncoderA, RISING);
-    attachInterrupt(digitalPinToInterrupt(ENCODERB_PIN), interruptHandlerEncoderB, RISING);
-  }
+  public:
+    Drivers():
+      lcd(0x27, 16, 2), button(BUTTON_PIN, true),
+      motorA(MOTORA_DIR_PIN, MOTORA_PWM_PIN, -10),
+      motorB(MOTORB_DIR_PIN, MOTORB_PWM_PIN),
+      color(COLOR_LED_PIN, COLOR_S0_PIN, COLOR_S1_PIN, COLOR_S2_PIN, COLOR_S3_PIN, COLOR_OUT_PIN),
+      rotary(A9, A10, A8)
+    {
+      pinMode(ENCODERA_PIN, INPUT_PULLUP);
+      pinMode(ENCODERB_PIN, INPUT_PULLUP);
+      //TCCR1B |= _BV(CS12) | _BV(CS10);
+      //TCCR3B |= _BV(CS32) | _BV(CS30);
+      attachInterrupt(digitalPinToInterrupt(ENCODERA_PIN), interruptHandlerEncoderA, RISING);
+      attachInterrupt(digitalPinToInterrupt(ENCODERB_PIN), interruptHandlerEncoderB, RISING);
+    }
 
-  LiquidCrystal_I2C lcd;
-  OneButton button;
-  Encoder encoderA;
-  Encoder encoderB;
-  Motor motorA;
-  Motor motorB;
-  AnalogScanner scanner;
-  Color color;
-  ClickEncoder rotary;
+    LiquidCrystal_I2C lcd;
+    OneButton button;
+    Encoder encoderA;
+    Encoder encoderB;
+    Motor motorA;
+    Motor motorB;
+    AnalogScanner scanner;
+    Color color;
+    ClickEncoder rotary;
 };
 
 static Drivers static_drv;
@@ -368,7 +382,7 @@ void Robot::showStatus()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, name);
     drv.lcd.print(showBuffer);
     needUpdateScreen = false;
@@ -377,7 +391,7 @@ void Robot::showStatus()
 
   if (needUpdateStatus)
   {
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     drv.lcd.print(status);
     needUpdateStatus = false;
   }
@@ -402,7 +416,7 @@ void Robot::poll()
       resetEncoders();
   }
 
-  switch(screenState) {
+  switch (screenState) {
     default:
     case RobotStatusInfo:
       showStatus();
@@ -445,18 +459,18 @@ void Robot::showEncoders()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, "EncA = ");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(7,0);
+    drv.lcd.setCursor(7, 0);
     drv.lcd.print(drv.encoderA());
     drv.lcd.print(' ');
     drv.lcd.print(drv.encoderA.diff());
 
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     prepareString(showBuffer, "EncB = ");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(7,1);
+    drv.lcd.setCursor(7, 1);
     drv.lcd.print(drv.encoderB());
     drv.lcd.print(' ');
     drv.lcd.print(drv.encoderB.diff());
@@ -469,16 +483,16 @@ void Robot::showMotors()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, "MotA = ");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(7,0);
+    drv.lcd.setCursor(7, 0);
     drv.lcd.print(drv.motorA());
 
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     prepareString(showBuffer, "MotB = ");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(7,1);
+    drv.lcd.setCursor(7, 1);
     drv.lcd.print(drv.motorB());
 
     needUpdateScreen = false;
@@ -489,20 +503,20 @@ void Robot::showAnalog1()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, "");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     drv.lcd.print(showBuffer);
 
-    drv.lcd.setCursor(2,0);
+    drv.lcd.setCursor(2, 0);
     drv.lcd.print(analogSensor(ForwardSensorLeft));
-    drv.lcd.setCursor(10,0);
+    drv.lcd.setCursor(10, 0);
     drv.lcd.print(analogSensor(ForwardSensorRight));
 
-    drv.lcd.setCursor(1,1);
+    drv.lcd.setCursor(1, 1);
     drv.lcd.print(analogSensor(CentralSensorLeft));
-    drv.lcd.setCursor(11,1);
+    drv.lcd.setCursor(11, 1);
     drv.lcd.print(analogSensor(CentralSensorRight));
 
     needUpdateScreen = false;
@@ -513,20 +527,20 @@ void Robot::showAnalog2()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, "");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     drv.lcd.print(showBuffer);
 
-    drv.lcd.setCursor(1,0);
+    drv.lcd.setCursor(1, 0);
     drv.lcd.print(analogSensor(CentralSensorLeft));
-    drv.lcd.setCursor(11,0);
+    drv.lcd.setCursor(11, 0);
     drv.lcd.print(analogSensor(CentralSensorRight));
 
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     drv.lcd.print(analogSensor(BackwardSensorLeft));
-    drv.lcd.setCursor(12,1);
+    drv.lcd.setCursor(12, 1);
     drv.lcd.print(analogSensor(BackwardSensorRight));
 
     needUpdateScreen = false;
@@ -537,21 +551,21 @@ void Robot::showColor()
 {
   if (needUpdateScreen)
   {
-    drv.lcd.setCursor(0,0);
+    drv.lcd.setCursor(0, 0);
     prepareString(showBuffer, "R:      G:      ");
     drv.lcd.print(showBuffer);
-    drv.lcd.setCursor(0,1);
+    drv.lcd.setCursor(0, 1);
     prepareString(showBuffer, "B:              ");
     drv.lcd.print(showBuffer);
 
-    drv.lcd.setCursor(3,0);
+    drv.lcd.setCursor(3, 0);
     drv.lcd.print(colorSensorRed());
-    drv.lcd.setCursor(11,0);
+    drv.lcd.setCursor(11, 0);
     drv.lcd.print(colorSensorGreen());
 
-    drv.lcd.setCursor(3,1);
+    drv.lcd.setCursor(3, 1);
     drv.lcd.print(colorSensorBlue());
-    drv.lcd.setCursor(8,1);
+    drv.lcd.setCursor(8, 1);
     drv.lcd.print(colorSensorName());
 
     needUpdateScreen = false;
@@ -577,7 +591,7 @@ void Robot::showPrevInfo()
 
 void Robot::showPoll()
 {
-  if(screenState != RobotStatusInfo)
+  if (screenState != RobotStatusInfo)
     needUpdateScreen = true;
 }
 

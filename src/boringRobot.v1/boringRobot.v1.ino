@@ -15,7 +15,7 @@ static const char *name = "boringRobot-v1.0";
 
 void setup() {
   Serial.begin(115200);
-  while(!Serial);
+  while (!Serial);
 
   log("Setup boringRobot");
 
@@ -50,8 +50,8 @@ void program()
   if (fs < 1000)
     k2 = 30;
 
-  int lp = BASE_POWER + er*k1/k2;
-  int rp = BASE_POWER - er*k1/k2;
+  int lp = BASE_POWER + er * k1 / k2;
+  int rp = BASE_POWER - er * k1 / k2;
 
   if (lp < 0) lp = 0;
   if (rp < 0) rp = 0;
@@ -129,9 +129,9 @@ void oneSecondPulse() {
   if (fs < 1000)
     k2 = 30;
 
-  Serial.print(BASE_POWER + er*k1/k2);
+  Serial.print(BASE_POWER + er * k1 / k2);
   Serial.print(" | ");
-  Serial.println(BASE_POWER - er*k1/k2);
+  Serial.println(BASE_POWER - er * k1 / k2);
 
   robot.showPoll();
 }
