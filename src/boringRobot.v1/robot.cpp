@@ -308,10 +308,6 @@ ColorType Color::getColor()
     log ("green = ", green);
     log ("may color = ", may_color);
     log ("other diff = ", other_diff);
-    if (other_diff < 50) {
-        //if (may_color != ::RedColor || _blue < 350)
-        return may_color;
-    }
     if (may_color == ::RedColor && _red > 400) {
       if ((_green + 20) > _blue)
         return ::YellowColor;
@@ -323,6 +319,9 @@ ColorType Color::getColor()
     } else if (may_color == ::BlueColor) {
       if ((_blue - 20) > min_value + other_diff)
         return ::BlueColor;
+    }
+    if (other_diff < 50) {
+        return may_color;
     }
     if (_white > 500 && _red < 400) {
       if (may_color == ::GreenColor)
