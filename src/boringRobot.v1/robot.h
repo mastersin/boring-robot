@@ -62,6 +62,8 @@ class Robot
     void setPowerB(int);
     void setSteeringPower(int, int);
     void resetEncoders();
+    long getEncoderA();
+    long getEncoderB();
 
     int colorSensorRed();
     int colorSensorGreen();

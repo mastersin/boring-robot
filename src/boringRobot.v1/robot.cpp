@@ -848,6 +848,17 @@ void Robot::resetEncoders()
   drv.encoderB.reset();
 }
 
+
+long Robot::getEncoderA()
+{
+  return drv.encoderA();
+}
+
+long Robot::getEncoderB()
+{
+  return drv.encoderB();
+}
+
 int Robot::colorInterval()
 {
   return TCS3200_PULSES_INTERVAL;

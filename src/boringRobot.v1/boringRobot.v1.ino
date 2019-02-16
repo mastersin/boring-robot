@@ -25,23 +25,25 @@ void setup() {
   taskManager.scheduleFixedRate(5, [] { log(taskManager.checkAvailableSlots(slotString)); }, TIME_SECONDS);
 }
 
+int fr = 0;
+int fl = 0;
+int br = 0;
+int bl = 0;
+int r = 0;
+int l = 0;
+
+int lp = 0;
+int rp = 0;
 
 static int BASE_POWER = 15;
-static bool programStarted = false;
-void program()
+void easy_go()
 {
-  if (!programStarted) {
-    robot.setPowerA(0);
-    robot.setPowerB(0);
-    return;
-  }
-
-  int fr = robot.analogSensor(ForwardSensorRight);
-  int fl = robot.analogSensor(ForwardSensorLeft);
-  int br = robot.analogSensor(BackwardSensorRight);
-  int bl = robot.analogSensor(BackwardSensorLeft);
-  int r = robot.analogSensor(CentralSensorRight);
-  int l = robot.analogSensor(CentralSensorLeft);
+  fr = robot.analogSensor(ForwardSensorRight);
+  fl = robot.analogSensor(ForwardSensorLeft);
+  br = robot.analogSensor(BackwardSensorRight);
+  bl = robot.analogSensor(BackwardSensorLeft);
+  r = robot.analogSensor(CentralSensorRight);
+  l = robot.analogSensor(CentralSensorLeft);
 
   static int I = 0;
   int er = l - r;
@@ -65,8 +67,8 @@ void program()
 //  }
   int adj = er * k1 / k2;
 
-  int lp = BASE_POWER + acc + (adj > 0 ? adj * 2 / 3 : adj);// + I / 1000;
-  int rp = BASE_POWER + acc - (adj < 0 ? adj * 2 / 3 : adj);// - I / 1000;
+  lp = BASE_POWER + acc + (adj > 0 ? adj * 2 / 3 : adj);// + I / 1000;
+  rp = BASE_POWER + acc - (adj < 0 ? adj * 2 / 3 : adj);// - I / 1000;
 
   if (lp < 0) lp = 0;
   if (rp < 0) rp = 0;
@@ -81,6 +83,35 @@ void program()
 //    rp -= 20;
 //    lp += 20;
 //  }
+}
+
+static int state = 0;
+static bool programStarted = false;
+void program()
+{
+  if (!programStarted) {
+    robot.setPowerA(0);
+    robot.setPowerB(0);
+    return;
+  }
+
+  easy_go();
+
+  switch(state) {
+    case 0:
+      if (br > 500 || bl > 500)
+        state = 1;
+      break;
+    case 1:
+      rp = 0;
+      lp = 40;
+      robot.resetEncoders();
+      state = 2;
+    case 2:
+      if (robot.getEncoderA() > 15)
+        state = 0;
+      break;
+  }
 
   robot.setPowerA(lp);
   robot.setPowerB(rp);
@@ -122,7 +153,7 @@ void nextInfo()
 }
 
 void oneSecondPulse() {
-  log("One second pulse");
+  log("Pulse, state = ", state);
 
   robot.showPoll();
 }
